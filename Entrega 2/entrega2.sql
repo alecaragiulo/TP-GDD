@@ -232,7 +232,7 @@ BEGIN
 		deposito NUMERIC,
 		comision NUMERIC,
 		gastos_averiguaciones NUMERIC,
-		estado_alquiler_id INT REFERENCES Estado_alquiler (estado_alquiler_id),
+		estado_alquiler_id INT REFERENCES Estado_alquiler(estado_alquiler_id),
 	);
 
 	---------------------------
@@ -262,7 +262,7 @@ BEGIN
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 	---------------------------
-	--		INMUEBLE
+	--		INMUEBLES
 	---------------------------
 
 	INSERT INTO Estado_inmueble(tipo) 
@@ -286,34 +286,7 @@ BEGIN
 		SELECT DISTINCT INMUEBLE_TIPO_INMUEBLE FROM gd_esquema.Maestra WHERE INMUEBLE_TIPO_INMUEBLE IS NOT NULL;
 
 	---------------------------
-	--		ALQUILER
-	---------------------------
-
-	INSERT INTO Estado_alquiler(tipo) 
-		SELECT DISTINCT ALQUILER_ESTADO as tipo FROM gd_esquema.Maestra WHERE ALQUILER_ESTADO IS NOT NULL;
-
-	INSERT INTO Inquilino(nombre, apellido, dni, mail, telefono, fecha_nac, fecha_registro) 
-		SELECT DISTINCT INQUILINO_NOMBRE, INQUILINO_APELLIDO, INQUILINO_DNI, 
-						INQUILINO_MAIL, INQUILINO_TELEFONO, INQUILINO_FECHA_NAC, 
-						INQUILINO_FECHA_REGISTRO 
-		FROM gd_esquema.Maestra WHERE INQUILINO_DNI IS NOT NULL;
-
-	-- FALTA INSERTAR FK DE ALQUILER ASOC
-	INSERT INTO Detalle_importe(numero_periodo_fin, numero_periodo_inicio, precio)
-		SELECT DISTINCT DETALLE_ALQ_NRO_PERIODO_FIN, 
-						DETALLE_ALQ_NRO_PERIODO_INI, 
-						DETALLE_ALQ_PRECIO
-		FROM gd_esquema.Maestra;
-
-	INSERT INTO Gestion_Pago_Alquileres(gestion_pago_alquileres_id, fecha_pago, numero_periodo_pago, descripcion_periodo, fecha_inicio_periodo_pagado, fecha_fin_periodo_pagado, importe,medio_pago_id)
-		SELECT DISTINCT PAGO_ALQUILER_CODIGO, PAGO_ALQUILER_FECHA, 
-						PAGO_ALQUILER_NRO_PERIODO, PAGO_ALQUILER_DESC, 
-						PAGO_ALQUILER_FEC_INI, PAGO_ALQUILER_FEC_FIN, 
-						PAGO_ALQUILER_IMPORTE, medio_pago_id
-		FROM gd_esquema.Maestra 
-		INNER JOIN Medio_Pago ON medio = PAGO_ALQUILER_MEDIO_PAGO
-	---------------------------
-	--		PAGO
+	--		PAGOS
 	---------------------------
 
 	INSERT INTO Medio_Pago(medio)
@@ -360,7 +333,7 @@ BEGIN
 		WHERE M.SUCURSAL_LOCALIDAD IS NOT NULL;
 
 	---------------------------
-	--		ANUNCIO
+	--		ANUNCIOS
 	---------------------------
 
 	INSERT INTO Sucursal(nombre,localidad_id,direccion,telefono)
@@ -379,14 +352,19 @@ BEGIN
 	INSERT INTO Estado_Anuncio(tipo)
 		SELECT DISTINCT ANUNCIO_ESTADO FROM gd_esquema.Maestra where ANUNCIO_ESTADO is not null;
 
--------------------------------
---		   ALQUILER
--------------------------------
+	INSERT INTO Periodo(tipo)
+		SELECT DISTINCT 
+		CASE 
+		WHEN ANUNCIO_TIPO_PERIODO = 'Periodo dia' THEN 'Dia'
+		WHEN ANUNCIO_TIPO_PERIODO = 'Periodo Quincena' THEN 'Quincena'
+		WHEN ANUNCIO_TIPO_PERIODO = 'Periodo Semana' THEN 'Semana'
+		WHEN ANUNCIO_TIPO_PERIODO = 'Periodo Mes' THEN 'Mes'
+		ELSE ANUNCIO_TIPO_PERIODO
+		END AS ANUNCIO_TIPO_PERIODO
+		FROM gd_esquema.Maestra WHERE ANUNCIO_TIPO_PERIODO IS NOT NULL;
 
 INSERT INTO Caracteristica(descripcion)
 	VALUES ('cable'),('calefaccion'),('gas'),('wifi')
-	
-	
 	
 
 INSERT INTO inmueble(tipo_inmueble_id,descripcion,propietario_id,direccion,barrio_id,ambiente_id,
@@ -406,10 +384,10 @@ INSERT INTO inmueble(tipo_inmueble_id,descripcion,propietario_id,direccion,barri
 -- los dnis si son antiguos pueden repetirse 
 
 
-INSERT INTO Inmuebles_Caracteristicas(caracteristica_id,inmueble_id)
-	SELECT car
-	FROM gd_esquema.Maestra M
-	INNER JOIN Caracteristica C ON C
+--INSERT INTO Inmuebles_Caracteristicas(caracteristica_id,inmueble_id)
+--	SELECT car
+--	FROM gd_esquema.Maestra M
+--	INNER JOIN Caracteristica C ON C
 
 
 
@@ -427,31 +405,72 @@ INSERT INTO pago(importe,moneda_id,medio_pago_id,cotizacion)
 	INNER JOIN Moneda MO ON MO.tipo = M.PAGO_VENTA_MONEDA
 
 
-INSERT INTO anuncios(fecha_publicacion,agente_id,operacion_id,inmueble_id,anuncio_precio,moneda_id,
-					 periodo_id,estado_anuncio_id,fecha_finalizacion,costo_publicacion,precio_publicacion_inmueble)
+--INSERT INTO anuncios(fecha_publicacion,agente_id,operacion_id,inmueble_id,anuncio_precio,moneda_id,
+--					 periodo_id,estado_anuncio_id,fecha_finalizacion,costo_publicacion,precio_publicacion_inmueble)
 
-	SELECT M.ANUNCIO_FECHA_PUBLICACION,M.ANUNCIO_PRECIO_PUBLICADO,M.ANUNCIO_FECHA_FINALIZACION
-	FROM gd_esquema.Maestra M
-	INNER JOIN Agente A ON A.mail = M.AGENTE_MAIL
-	INNER JOIN Operacion O ON O.tipo = M.ANUNCIO_TIPO_OPERACION
-	INNER JOIN Inmueble I ON I.
-	INNER JOIN
-	INNER JOIN
-	INNER JOIN
-
-
-	--ANUNCIO CODIGO ES PRIMARY PQ NO SE REPITA ACA LA PRUEBA PEDAZO DE GATO
-	--NO NECESITAMOS PK PORQUE LA IMPORTAMOS 
-	SELECT ANUNCIO_CODIGO,COUNT(ANUNCIO_CODIGO) 
-	FROM gd_esquema.Maestra WHERE INMUEBLE_CODIGO IS NOT NULL
-	GROUP BY ANUNCIO_CODIGO HAVING COUNT(ANUNCIO_CODIGO)>1
+--	SELECT M.ANUNCIO_FECHA_PUBLICACION,M.ANUNCIO_PRECIO_PUBLICADO,M.ANUNCIO_FECHA_FINALIZACION
+--	FROM gd_esquema.Maestra M
+--	INNER JOIN Agente A ON A.mail = M.AGENTE_MAIL
+--	INNER JOIN Operacion O ON O.tipo = M.ANUNCIO_TIPO_OPERACION
+--	INNER JOIN Inmueble I ON I.
+--	INNER JOIN
+--	INNER JOIN
+--	INNER JOIN
 
 
-INSERT ventas
+--	--ANUNCIO CODIGO ES PRIMARY PQ NO SE REPITA ACA LA PRUEBA PEDAZO DE GATO
+--	--NO NECESITAMOS PK PORQUE LA IMPORTAMOS 
+--	SELECT ANUNCIO_CODIGO,COUNT(ANUNCIO_CODIGO) 
+--	FROM gd_esquema.Maestra WHERE INMUEBLE_CODIGO IS NOT NULL
+--	GROUP BY ANUNCIO_CODIGO HAVING COUNT(ANUNCIO_CODIGO)>1
 
-INSERT alquiler
 
-INSERT detalle_importe
+--INSERT ventas
+
+
+	---------------------------
+	--		ALQUILERES
+	---------------------------
+
+	INSERT INTO Estado_alquiler(tipo) 
+		SELECT DISTINCT ALQUILER_ESTADO as tipo FROM gd_esquema.Maestra WHERE ALQUILER_ESTADO IS NOT NULL;
+
+	INSERT INTO Inquilino(nombre, apellido, dni, mail, telefono, fecha_nac, fecha_registro) 
+		SELECT DISTINCT INQUILINO_NOMBRE, INQUILINO_APELLIDO, INQUILINO_DNI, 
+						INQUILINO_MAIL, INQUILINO_TELEFONO, INQUILINO_FECHA_NAC, 
+						INQUILINO_FECHA_REGISTRO 
+		FROM gd_esquema.Maestra WHERE INQUILINO_DNI IS NOT NULL;
+
+	INSERT INTO Alquiler(alquiler_id,anuncio_id,inquilino_id,estado_alquiler_id,fecha_inicio,fecha_final,duracion,deposito,comision,gastos_averiguaciones)
+		SELECT DISTINCT ALQUILER_CODIGO,
+						ANUNCIO_CODIGO,
+						inquilino_id,
+						estado_alquiler_id,
+						ALQUILER_FECHA_INICIO,
+						ALQUILER_FECHA_FIN,
+						ALQUILER_CANT_PERIODOS + ' (' + p.tipo + ')' ,
+						ALQUILER_DEPOSITO,
+						ALQUILER_COMISION,
+						ALQUILER_GASTOS_AVERIGUA
+		FROM gd_esquema.Maestra
+		JOIN Periodo p ON 'Periodo ' + p.tipo = ANUNCIO_TIPO_PERIODO
+		JOIN Estado_alquiler e ON e.tipo = ALQUILER_ESTADO
+		JOIN Inquilino i ON i.dni = INQUILINO_DNI;
+
+	INSERT INTO Detalle_importe(alquiler_id, numero_periodo_fin, numero_periodo_inicio, precio)
+		SELECT DISTINCT ALQUILER_CODIGO,
+						DETALLE_ALQ_NRO_PERIODO_FIN, 
+						DETALLE_ALQ_NRO_PERIODO_INI, 
+						DETALLE_ALQ_PRECIO
+		FROM gd_esquema.Maestra
+
+	INSERT INTO Gestion_Pago_Alquileres(gestion_pago_alquileres_id, fecha_pago, numero_periodo_pago, descripcion_periodo, fecha_inicio_periodo_pagado, fecha_fin_periodo_pagado, importe,medio_pago_id)
+		SELECT DISTINCT PAGO_ALQUILER_CODIGO, PAGO_ALQUILER_FECHA, 
+						PAGO_ALQUILER_NRO_PERIODO, PAGO_ALQUILER_DESC, 
+						PAGO_ALQUILER_FEC_INI, PAGO_ALQUILER_FEC_FIN, 
+						PAGO_ALQUILER_IMPORTE, medio_pago_id
+		FROM gd_esquema.Maestra 
+		INNER JOIN Medio_Pago ON medio = PAGO_ALQUILER_MEDIO_PAGO
 
 COMMIT
 END
